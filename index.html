@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Parque Móvil</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <style>
+    :root{
+      --blue:#004a98;
+      --blue-light:#e2ecf7;
+      --bg:#f5f5f7;
+      --border:#d3d7dd;
+      --text:#111827;
+      --muted:#6b7280;
+      --yellow:#fde68a;
+      --danger:#dc2626;
+      --ok:#16a34a;
+    }
+    *{box-sizing:border-box;}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    header{
+      background:var(--blue);
+      color:#fff;
+      padding:.75rem 1rem;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      font-size:.95rem;
+    }
+    header .title{font-weight:600;}
+    header .subtitle{font-size:.75rem;opacity:.9;}
+    header .user-chip{
+      font-size:.75rem;
+      padding:.15rem .6rem;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.7);
+    }
+
+    main{
+      max-width:480px;
+      margin:0 auto;
+      padding:1rem;
+      padding-bottom:2.5rem;
+    }
+
+    .screen{display:none;}
+    .screen.active{display:block;}
+
+    h1{
+      font-size:1.25rem;
+      margin:.2rem 0 .8rem;
+    }
+
+    .card{
+      background:#fff;
+      border-radius:14px;
+      border:1px solid var(--border);
+      padding:1rem 1.1rem;
+      margin-bottom:1rem;
+      box-shadow:0 2px 4px rgba(15,23,42,.06);
+    }
+
+    .label{
+      display:block;
+      font-size:.85rem;
+      margin-top:.6rem;
+      margin-bottom:.2rem;
+    }
+
+    .input,.select,.textarea{
+      width:100%;
+      padding:.55rem .7rem;
+      border-radius:8px;
+      border:1px solid var(--border);
+      font-size:.9rem;
+      background:#fff;
+    }
+    .input:focus,.select:focus,.textarea:focus{
+      outline:2px solid var(--blue);
+      outline-offset:1px;
+    }
+    .textarea{resize:vertical;}
+
+    .btn{
+      border-radius:999px;
+      padding:.65rem 1.3rem;
+      font-size:.9rem;
+      border:none;
+      cursor:pointer;
+    }
+    .btn-primary{background:var(--blue);color:#fff;}
+    .btn-secondary{background:#fff;border:1px solid var(--border);}
+    .btn-ghost{background:transparent;border:none;color:var(--blue);font-size:.9rem;}
+    .btn-full{width:100%;}
+
+    .muted{font-size:.85rem;color:var(--muted);}
+
+    .check-row{
+      margin-top:.4rem;
+      font-size:.85rem;
+      color:var(--muted);
+    }
+    .check-row input{margin-right:.35rem;}
+
+    /* MENÚ PRINCIPAL */
+    .menu-grid{
+      display:flex;
+      flex-direction:column;
+      gap:.75rem;
+    }
+    .menu-card{
+      text-align:left;
+      border-radius:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      padding:.9rem 1rem;
+      cursor:pointer;
+      display:flex;
+      flex-direction:column;
+      gap:.15rem;
+    }
+    .menu-card p{
+      margin:0;
+      font-size:.8rem;
+      color:var(--muted);
+    }
+
+    /* PESTAÑAS */
+    .tabs{
+      display:flex;
+      background:#e5e7eb;
+      padding:.25rem;
+      border-radius:999px;
+      margin-bottom:.8rem;
+    }
+    .tab-btn{
+      flex:1;
+      text-align:center;
+      padding:.4rem .3rem;
+      margin:.1rem;
+      border-radius:999px;
+      font-size:.85rem;
+      font-weight:600;
+      border:none;
+      background:transparent;
+      color:#374151;
+      cursor:pointer;
+    }
+    .tab-btn.active{
+      background:#fff;
+      color:var(--blue);
+      box-shadow:0 1px 3px rgba(0,0,0,.15);
+    }
+
+    /* LISTAS */
+    .service{
+      background:#fff;
+      border-radius:12px;
+      border:1px solid var(--border);
+      padding:.8rem .9rem;
+      font-size:.9rem;
+      margin-bottom:.6rem;
+      box-shadow:0 1px 3px rgba(0,0,0,.05);
+    }
+    .service-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      margin-bottom:.25rem;
+    }
+    .badge{
+      font-size:.75rem;
+      padding:.15rem .55rem;
+      border-radius:999px;
+      font-weight:600;
+    }
+    .badge-yellow{background:var(--yellow);}
+    .badge-red{background:#fee2e2;color:#991b1b;}
+    .badge-green{background:#dcfce7;color:#166534;}
+    .service-body{color:var(--muted);font-size:.85rem;}
+    .service-foot{
+      margin-top:.3rem;
+      display:flex;
+      justify-content:space-between;
+      font-size:.8rem;
+    }
+    .link{color:var(--blue);cursor:pointer;}
+
+    .filter-bar{
+      display:flex;
+      align-items:flex-end;
+      gap:.5rem;
+      margin-bottom:.75rem;
+    }
+    .grid-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:.5rem;
+    }
+  </style>
+</head>
+
+<body>
+<header>
+  <div>
+    <div class="title">Gobierno de Canarias</div>
+    <div class="subtitle" id="header-sub">Sistema Centralizado de Autenticación</div>
+  </div>
+  <div id="header-user" class="user-chip" style="display:none;"></div>
+</header>
+
+<main>
+
+  <!-- LOGIN -->
+  <section id="scr-login" class="screen active">
+    <div class="card">
+      <h1>Sistema Centralizado de Autenticación</h1>
+
+      <label class="label" for="usuario">Usuario / NIF/NIE</label>
+      <input id="usuario" class="input" type="text" placeholder="12345678Z" />
+
+      <label class="label" for="contrasena">Contraseña</label>
+      <input id="contrasena" class="input" type="password" placeholder="••••••••" />
+
+      <div class="check-row">
+        <label>
+          <input id="chk-remember" type="checkbox" checked />
+          Recordar usuario y contraseña
+        </label>
+      </div>
+      <div class="check-row">
+        <label>
+          <input id="chk-showpass" type="checkbox" />
+          Mostrar contraseña
+        </label>
+      </div>
+
+      <button id="btn-login" class="btn btn-primary btn-full" style="margin-top:.9rem;">
+        Iniciar sesión
+      </button>
+
+      <p class="muted" style="margin-top:.7rem;">
+        Las credenciales se guardan sólo en este dispositivo si marcas "Recordar".
+      </p>
+    </div>
+  </section>
+
+  <!-- MENÚ PRINCIPAL -->
+  <section id="scr-menu" class="screen">
+    <h1>Parque Móvil</h1>
+    <p class="muted" id="menu-saludo"></p>
+
+    <div class="card">
+      <div class="menu-grid">
+        <button class="menu-card" data-screen="scr-panel" data-tab="solicitudes">
+          <div><strong>Gestión de Solicitudes</strong></div>
+          <p>Consulta, crea y administra solicitudes de servicio.</p>
+        </button>
+
+        <button class="menu-card" data-screen="scr-panel" data-tab="avisos">
+          <div><strong>Gestión de Avisos</strong></div>
+          <p>Revisa avisos relacionados con solicitudes y servicios.</p>
+        </button>
+
+        <button class="menu-card" data-screen="scr-panel" data-tab="servicios">
+          <div><strong>Listado de Servicios</strong></div>
+          <p>Consulta los servicios asignados como conductor.</p>
+        </button>
+      </div>
+    </div>
+
+    <button id="btn-logout" class="btn btn-ghost" style="margin-top:.8rem;">
+      Cerrar sesión
+    </button>
+  </section>
+
+  <!-- PANTALLA CON 3 PESTAÑAS -->
+  <section id="scr-panel" class="screen">
+    <h1>Gestor de Servicios</h1>
+
+    <!-- barra de pestañas -->
+    <div class="tabs">
+      <button class="tab-btn active" id="tab-solicitudes" data-tab="solicitudes">Solicitudes</button>
+      <button class="tab-btn" id="tab-avisos" data-tab="avisos">Avisos</button>
+      <button class="tab-btn" id="tab-servicios" data-tab="servicios">Servicios</button>
+    </div>
+
+    <!-- contenido pestaña: SOLICITUDES -->
+    <div id="tab-content-solicitudes">
+      <div class="card">
+        <div class="grid-2">
+          <div>
+            <label class="label">Nº Solicitud</label>
+            <input class="input" type="text" />
+          </div>
+          <div>
+            <label class="label">Estado</label>
+            <select class="select">
+              <option>(Todos)</option>
+              <option>Pendiente</option>
+              <option>Autorizado</option>
+              <option>Denegado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-2">
+          <div>
+            <label class="label">Fecha solicitud desde</label>
+            <input class="input" type="date" />
+          </div>
+          <div>
+            <label class="label">Fecha solicitud hasta</label>
+            <input class="input" type="date" />
+          </div>
+        </div>
+
+        <label class="label">Motivo</label>
+        <textarea class="textarea" rows="2"></textarea>
+
+        <div style="display:flex;justify-content:flex-end;gap:.5rem;margin-top:.8rem;">
+          <button class="btn btn-secondary">Limpiar</button>
+          <button class="btn btn-primary">Buscar</button>
+        </div>
+      </div>
+
+      <p class="muted">No existen solicitudes que se ajusten a los criterios indicados (demo).</p>
+    </div>
+
+    <!-- contenido pestaña: AVISOS -->
+    <div id="tab-content-avisos" style="display:none;">
+      <div class="service">
+        <div class="service-head">
+          <span class="badge badge-red">URGENTE</span>
+          <span class="muted" style="font-size:.8rem;">14/11/2025</span>
+        </div>
+        <div class="service-body">
+          <div><strong>Cambio de servicio</strong></div>
+          <div>Se ha modificado el conductor asignado al servicio de Gran Canaria.</div>
+        </div>
+        <div class="service-foot">
+          <span>Ref. AV-2025-014</span>
+          <span class="link">Ver detalle ></span>
+        </div>
+      </div>
+
+      <div class="service">
+        <div class="service-head">
+          <span class="badge badge-green">INFORMATIVO</span>
+          <span class="muted" style="font-size:.8rem;">13/11/2025</span>
+        </div>
+        <div class="service-body">
+          <div><strong>Mantenimiento programado</strong></div>
+          <div>Revisión periódica del vehículo 1234-LBB.</div>
+        </div>
+        <div class="service-foot">
+          <span>Ref. AV-2025-010</span>
+          <span class="link">Ver detalle ></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- contenido pestaña: SERVICIOS -->
+    <div id="tab-content-servicios" style="display:none;">
+      <div class="filter-bar">
+        <div style="flex:1;">
+          <label class="label" for="svc-date">Fecha</label>
+          <input id="svc-date" type="date" class="input" />
+        </div>
+        <button id="btn-svc-buscar" class="btn btn-primary">
+          Buscar
+        </button>
+      </div>
+
+      <div id="svc-list"></div>
+      <p id="svc-empty" class="muted" style="display:none;">
+        No existen servicios para la fecha seleccionada.
+      </p>
+    </div>
+
+    <button class="btn btn-ghost" style="margin-top:.8rem;" data-screen="scr-menu">
+      Volver al menú
+    </button>
+  </section>
+
+  <!-- DETALLE SERVICIO -->
+  <section id="scr-detalle" class="screen">
+    <h1>Detalle de Servicio</h1>
+
+    <div class="card">
+      <p><strong>Parte Nº:</strong> <span id="det-parte"></span></p>
+      <p><strong>Fecha:</strong> <span id="det-fecha"></span></p>
+      <p><strong>Hora:</strong> <span id="det-hora"></span></p>
+      <p><strong>Isla:</strong> <span id="det-isla"></span></p>
+      <p><strong>Tipo servicio:</strong> <span id="det-tipo"></span></p>
+      <p><strong>Vehículo:</strong> <span id="det-veh"></span></p>
+      <p><strong>Motivo:</strong></p>
+      <p id="det-motivo" class="muted"></p>
+      <p><strong>Ocupantes / Organismos:</strong></p>
+      <ul id="det-ocup"></ul>
+    </div>
+
+    <button class="btn btn-secondary" data-screen="scr-panel">
+      Volver al listado
+    </button>
+  </section>
+
+</main>
+
+<script>
+  const $ = id => document.getElementById(id);
+
+  const serviciosDemo = [
+    {
+      id:"33992",
+      fecha:"2025-11-14",
+      hora:"07:30",
+      isla:"Gran Canaria",
+      tipo:"MÚLTIPLES IRA",
+      vehiculo:"COCHE COMPARTIDO",
+      motivo:"Buenos días, se modifica el conductor asignado por motivos organizativos. Saludos.",
+      ocupantes:[
+        "VICENTE FERNÁNDEZ - OLIVA SANTANA",
+        "J/SRV SEGURIDAD INDUSTRIAL",
+        "LOS RODEOS TENERIFE NORTE"
+      ],
+      estado:"ESPERAR"
+    },
+    {
+      id:"33993",
+      fecha:"2025-11-14",
+      hora:"07:30",
+      isla:"Gran Canaria",
+      tipo:"OTRO",
+      vehiculo:"COCHE COMPARTIDO",
+      motivo:"—",
+      ocupantes:["JUAN CARLOS OSORIO DÍAZ"],
+      estado:"ESPERAR"
+    }
+  ];
+
+  let usuarioSesion = null;
+
+  function showScreen(id){
+    document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+    $(id).classList.add("active");
+
+    const sub = $("header-sub");
+    const map = {
+      "scr-login":"Sistema Centralizado de Autenticación",
+      "scr-menu":"Parque Móvil — Menú principal",
+      "scr-panel":"Parque Móvil — Gestor de Servicios",
+      "scr-detalle":"Parque Móvil — Detalle de Servicio"
+    };
+    sub.textContent = map[id] || "Parque Móvil";
+  }
+
+  function setActiveTab(tab){
+    // botones
+    document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+    $("tab-"+tab).classList.add("active");
+    // contenidos
+    ["solicitudes","avisos","servicios"].forEach(t=>{
+      $("tab-content-"+t).style.display = (t===tab) ? "block" : "none";
+    });
+  }
+
+  function rellenarFechaHoy(){
+    const hoy = new Date();
+    const y = hoy.getFullYear();
+    const m = String(hoy.getMonth()+1).padStart(2,"0");
+    const d = String(hoy.getDate()).padStart(2,"0");
+    $("svc-date").value = `${y}-${m}-${d}`;
+  }
+
+  function renderServicios(fecha){
+    const cont = $("svc-list");
+    cont.innerHTML = "";
+    const lista = serviciosDemo.filter(s => s.fecha === fecha);
+    const empty = $("svc-empty");
+
+    if(!lista.length){
+      empty.style.display = "block";
+      return;
+    }
+    empty.style.display = "none";
+
+    lista.forEach(s=>{
+      const div = document.createElement("div");
+      div.className = "service";
+      div.innerHTML = `
+        <div class="service-head">
+          <span class="badge badge-yellow">${s.estado}</span>
+          <span class="muted" style="font-size:.8rem;">${s.fecha}</span>
+        </div>
+        <div class="service-body">
+          <div><strong>${s.isla}</strong></div>
+          <div>Tipo servicio: ${s.tipo}</div>
+          <div>Vehículo: ${s.vehiculo}</div>
+        </div>
+        <div class="service-foot">
+          <span>Parte Nº ${s.id}</span>
+          <span class="link" data-id="${s.id}">Ver detalle ></span>
+        </div>
+      `;
+      cont.appendChild(div);
+    });
+
+    cont.querySelectorAll(".link[data-id]").forEach(a=>{
+      a.addEventListener("click",()=>{
+        const id = a.getAttribute("data-id");
+        const srv = serviciosDemo.find(x=>x.id===id);
+        if(srv) mostrarDetalleServicio(srv);
+      });
+    });
+  }
+
+  function mostrarDetalleServicio(s){
+    $("det-parte").textContent=s.id;
+    $("det-fecha").textContent=s.fecha;
+    $("det-hora").textContent=s.hora;
+    $("det-isla").textContent=s.isla;
+    $("det-tipo").textContent=s.tipo;
+    $("det-veh").textContent=s.vehiculo;
+    $("det-motivo").textContent=s.motivo || "—";
+    const ul = $("det-ocup");
+    ul.innerHTML = "";
+    (s.ocupantes||[]).forEach(o=>{
+      const li=document.createElement("li");
+      li.textContent=o;
+      ul.appendChild(li);
+    });
+    showScreen("scr-detalle");
+  }
+
+  function cargarCredencialesGuardadas(){
+    const u = localStorage.getItem("pm_usuario");
+    const p = localStorage.getItem("pm_pass");
+    if(u){
+      $("usuario").value=u;
+      $("chk-remember").checked=true;
+    }else{
+      $("chk-remember").checked=false;
+    }
+    if(p) $("contrasena").value=p;
+  }
+
+  function guardarCredenciales(u,p){
+    if($("chk-remember").checked){
+      localStorage.setItem("pm_usuario",u);
+      localStorage.setItem("pm_pass",p);
+    }else{
+      localStorage.removeItem("pm_usuario");
+      localStorage.removeItem("pm_pass");
+    }
+  }
+
+  function actualizarHeaderUser(){
+    const el=$("header-user");
+    if(usuarioSesion){
+      el.style.display="inline-block";
+      el.textContent=usuarioSesion;
+    }else{
+      el.style.display="none";
+      el.textContent="";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded",()=>{
+    cargarCredencialesGuardadas();
+
+    $("chk-showpass").addEventListener("change",()=>{
+      $("contrasena").type = $("chk-showpass").checked ? "text" : "password";
+    });
+
+    $("btn-login").addEventListener("click",()=>{
+      const u=$("usuario").value.trim();
+      const p=$("contrasena").value.trim();
+      if(!u || !p){
+        alert("Introduce usuario y contraseña.");
+        return;
+      }
+      usuarioSesion=u;
+      guardarCredenciales(u,p);
+      $("menu-saludo").textContent="Bienvenido, "+u;
+      actualizarHeaderUser();
+      showScreen("scr-menu");
+    });
+
+    $("btn-logout").addEventListener("click",()=>{
+      usuarioSesion=null;
+      actualizarHeaderUser();
+      showScreen("scr-login");
+    });
+
+    // Navegación desde el menú a panel con pestaña concreta
+    document.querySelectorAll(".menu-card").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const tab=btn.getAttribute("data-tab");
+        setActiveTab(tab);
+        showScreen("scr-panel");
+      });
+    });
+
+    // Cambiar de pestaña tocando las tabs
+    document.querySelectorAll(".tab-btn").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const tab=btn.getAttribute("data-tab");
+        setActiveTab(tab);
+      });
+    });
+
+    // Servicios
+    rellenarFechaHoy();
+    renderServicios($("svc-date").value);
+    $("btn-svc-buscar").addEventListener("click",()=>{
+      renderServicios($("svc-date").value);
+    });
+
+    // Navegación genérica por data-screen
+    document.querySelectorAll("[data-screen]").forEach(btn=>{
+      btn.addEventListener("click",()=>{
+        const scr=btn.getAttribute("data-screen");
+        showScreen(scr);
+      });
+    });
+  });
+</script>
+
+</body>
+</html>
